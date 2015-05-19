@@ -25,6 +25,11 @@
                                          input-view input-view-opts
                                          container-view container-view-opts]}]
   (reify
+
+    om/IDisplayName
+    (display-name [_]
+      "Core Autocomplete Component")
+
     om/IInitState
     (init-state [_]
       {:value-ch     (chan)
@@ -37,10 +42,10 @@
       (let [{:keys [value-ch focus-ch highlight-ch select-ch]} (om/get-state owner)]
         (go-loop []
           (alt!
+            select-ch    ([v _] (handle-select owner result-ch v))
             focus-ch     ([v _] (om/set-state! owner :focused? v))
             value-ch     ([v _] (om/set-state! owner :value v))
-            highlight-ch ([v _] (handle-highlight owner v))
-            select-ch    ([v _] (handle-select owner result-ch v)))
+            highlight-ch ([v _] (handle-highlight owner v)))
           (recur))))
 
     om/IDidUpdate

@@ -7,9 +7,8 @@
   :dependencies [[org.clojure/clojure "1.7.0-beta3"]
                  [org.clojure/clojurescript "0.0-3269"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [sablono "0.3.4"]
                  [org.omcljs/om "0.8.8"]
-                 ]
+                 [com.andrewmcveigh/cljs-time "0.3.5"]]
 
   :plugins [[lein-cljsbuild "1.0.6-SNAPSHOT"]
             [lein-figwheel "0.3.1"]

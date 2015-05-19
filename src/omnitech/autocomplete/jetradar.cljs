@@ -21,54 +21,68 @@
         (.abort xhr))
       (.send xhr (str ac-endpoint "?q=" value) "GET"))))
 
-(defn- transform-fn [{:keys [code title city_name country_name type]}]
-  {:iata code
-   :name city_name
-   :country country_name
-   :airport title
-   :type type})
-
-(defn container-view [_ _ {:keys [class-name]}]
+(defn container-view [_ _ _]
   (reify
+
+    om/IDisplayName
+    (display-name [_]
+      "Jetradar Autocomplete Container")
+
     om/IRenderState
     (render-state [_ {:keys [input-component results-component]}]
-      (dom/div #js {:className (str "dropdown " class-name)}
+      (dom/div #js {:className "ac-wrapper"}
                input-component results-component))))
 
-(defn input-view [_ _ {:keys [class-name placeholder]}]
+(defn input-view [cursor _ {:keys [placeholder]}]
   (reify
+
+    om/IDisplayName
+    (display-name [_]
+      "Jetradar Autocomplete Input")
+
     om/IRenderState
-    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value highlighted-index]}]
-      (dom/input #js {:type "text"
-                      :autoComplete "off"
-                      :spellCheck "false"
-                      :className (str "form-control " class-name)
-                      :placeholder placeholder
-                      :value value
-                      :onFocus (fn [e]
-                                 (put! focus-ch true)
-                                 (.preventDefault e))
-                      :onBlur #(go (let [_ (<! (timeout 100))]
-                                     ;; If we don't wait, then the dropdown will disappear before
-                                     ;; its onClick renders and a selection won't be made.
-                                     (put! focus-ch false)))
-                      :onKeyDown (fn [e]
-                                   (case (.-keyCode e)
-                                     40 (put! highlight-ch (inc highlighted-index)) ;; up
-                                     38 (put! highlight-ch (dec highlighted-index)) ;; down
-                                     13 (put! select-ch highlighted-index) ;; enter
-                                     9  (put! select-ch highlighted-index) ;; tab
-                                     nil))
-                      :onChange #(put! value-ch (.. % -target -value))}))))
+    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value highlighted-index result]}]
+      (dom/div nil
+               (dom/span nil (get-in cursor [:result :iata]))
+               (dom/div #js {:className "ac-input-wrapper"}
+                        (dom/input #js {:type "text"
+                                        :autoComplete "off"
+                                        :spellCheck "false"
+                                        :className "ac-input"
+                                        :placeholder placeholder
+                                        :value (if-let [title (get-in cursor [:result :title])]
+                                                 title
+                                                 value)
+                                        :onFocus (fn [e]
+                                                   (put! focus-ch true)
+                                                   (.preventDefault e))
+                                        :onBlur #(go
+                                                   (let [_ (<! (timeout 120))]
+                                                     ;; If we don't wait, then the dropdown will disappear before
+                                                     ;; its onClick renders and a selection won't be made.
+                                                     (put! focus-ch false)))
+                                        :onKeyDown (fn [e]
+                                                     (case (.-keyCode e)
+                                                       40 (put! highlight-ch (inc highlighted-index)) ;; up
+                                                       38 (put! highlight-ch (dec highlighted-index)) ;; down
+                                                       13 (put! select-ch highlighted-index) ;; enter
+                                                       9  (put! select-ch highlighted-index) ;; tab
+                                                       nil))
+                                        :onChange #(put! value-ch (.. % -target -value))}))))))
 
 (defn- results-view [app _ {:keys [loading-view loading-view-opts
                                    item-view item-view-opts]}]
   (reify
+
+    om/IDisplayName
+    (display-name [_]
+      "Jetraar Autocomplete Results")
+
     om/IRenderState
     (render-state [_ {:keys [highlight-ch select-ch value loading? focused? suggestions highlighted-index]}]
       (let [display? (and focused? value (not= value ""))
             display (if display? "block" "none")
-            attrs #js {:className "dropdown-menu"
+            attrs #js {:className "ac-items"
                        :style #js {:display display}}]
         (cond
           (and loading-view loading?)
@@ -93,38 +107,50 @@
 
 (defn- item-view [app owner {:keys [transform-fn]}]
   (reify
+
+    om/IDisplayName
+    (display-name [_]
+      "Jetradar Autocomplete Item")
+
     om/IDidMount
     (did-mount [this]
       (let [{:keys [index highlight-ch select-ch]} (om/get-state owner)
             node (om/get-node owner)]
         (gevents/listen node (.-MOUSEOVER gevents/EventType) #(put! highlight-ch index))
         (gevents/listen node (.-CLICK gevents/EventType) #(put! select-ch index))))
+
     om/IRenderState
     (render-state [_ {:keys [item index highlighted-index]}]
       (let [highlighted? (= index highlighted-index)
             item (transform-fn item)]
         (dom/li #js {:className (if highlighted? "active ac-item" "ac-item")}
-                (dom/div #js {:className "ac-name-iata"}
-                         (dom/span #js {:className "iata"} (:iata item))
-                         (dom/span #js {:className "name"} (:name item))
-                         (dom/span #js {:className "country"} (:country item)))
-                (dom/span #js {:className "airport"} (:airport item)))))))
+                (dom/div #js {:className "ac-item-container"}
+                         (dom/span #js {:className "ac-item-iata"} (:iata item))
+                         (dom/span #js {:className "ac-item-name"} (:name item))
+                         (dom/span #js {:className "ac-item-country"} (:country item)))
+                (dom/span #js {:className "ac-item-title"} (:title item)))))))
 
-(defn jetradar-ac [app owner {:keys [ac-endpoint placeholder]}]
+(defn jetradar-ac [app owner {:keys [ac-endpoint placeholder transform-fn]}]
   (reify
+
+    om/IDisplayName
+    (display-name [_]
+      "Jetradar Autocomplete Component")
+
     om/IInitState
     (init-state [_]
       {:result-ch (chan)
        :suggestions-fn (suggestions-fn-generator ac-endpoint)
        :placeholder placeholder})
+
     om/IWillMount
     (will-mount [_]
       (let [result-ch (om/get-state owner :result-ch)]
         (go-loop []
           (let [[idx result] (<! result-ch)]
-            (pprint result)
-            (om/update! app :result result)
+            (om/update! app :result (transform-fn result))
             (recur)))))
+
     om/IRenderState
     (render-state [_ {:keys [result-ch suggestions-fn placeholder]}]
       (om/build ac/autocomplete app
@@ -138,4 +164,3 @@
                                       :item-view-opts {:transform-fn transform-fn}}
                   :result-ch result-ch
                   :suggestions-fn suggestions-fn}}))))
-
