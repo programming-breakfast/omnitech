@@ -56,11 +56,9 @@
                                         :onFocus (fn [e]
                                                    (put! focus-ch true)
                                                    (.preventDefault e))
-                                        :onBlur #(go
-                                                   (let [_ (<! (timeout 120))]
-                                                     ;; If we don't wait, then the dropdown will disappear before
-                                                     ;; its onClick renders and a selection won't be made.
-                                                     (put! focus-ch false)))
+                                        :onBlur (fn [e]
+                                                  (put! focus-ch false)
+                                                  (.preventDefault e))
                                         :onKeyDown (fn [e]
                                                      (case (.-keyCode e)
                                                        40 (put! highlight-ch (inc highlighted-index)) ;; up

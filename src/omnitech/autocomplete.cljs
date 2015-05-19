@@ -1,7 +1,7 @@
 (ns omnitech.autocomplete
   (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]])
   (:require [om.core :as om :include-macros true]
-            [cljs.core.async :refer [chan take! put! close!]]))
+            [cljs.core.async :refer [chan take! put! close! timeout <!]]))
 
 (defn- reset-autocomplete-state! [owner]
   (do
@@ -43,7 +43,11 @@
         (go-loop []
           (alt!
             select-ch    ([v _] (handle-select owner result-ch v))
-            focus-ch     ([v _] (om/set-state! owner :focused? v))
+            focus-ch     ([v _] (if v
+                                  (om/set-state! owner :focused? v)
+                                  (go
+                                    (let [_ (<! (timeout 100))]
+                                      (om/set-state! owner :focused? v)))))
             value-ch     ([v _] (om/set-state! owner :value v))
             highlight-ch ([v _] (handle-highlight owner v)))
           (recur))))
