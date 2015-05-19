@@ -51,11 +51,16 @@
                                         :className "ac-input"
                                         :placeholder placeholder
                                         :value (if-let [title (get-in cursor [:result :title])]
-                                                 title
+                                                 (if (and value (not= value ""))
+                                                   value
+                                                   title)
                                                  value)
                                         :onFocus (fn [e]
-                                                   (put! focus-ch true)
-                                                   (.preventDefault e))
+                                                   (let [input-text (.. e -target)
+                                                         input-text-length (count (.-value input-text))]
+                                                     (.setSelectionRange input-text 0 input-text-length)
+                                                     (put! focus-ch true)
+                                                     (.preventDefault e)))
                                         :onBlur (fn [e]
                                                   (put! focus-ch false)
                                                   (.preventDefault e))
