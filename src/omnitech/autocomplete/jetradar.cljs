@@ -1,7 +1,7 @@
 (ns omnitech.autocomplete.jetradar
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [goog.events :as gevents]
-            [cljs.core.async :refer [put! <! chan timeout]]
+            [cljs.core.async :refer [put! <! chan]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [omnitech.autocomplete :as ac]
