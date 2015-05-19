@@ -2,7 +2,7 @@
     (:require [om.core :as om :include-macros true]
               [om.dom :as dom :include-macros true]
               [cljs.pprint :refer [pprint]]
-              [omnitech.segment :refer [segment]]
+              [omnitech.components.segment :refer [segment]]
               [cljs-time.core :as time]))
 
 (enable-console-print!)

@@ -1,4 +1,4 @@
-(ns omnitech.autocomplete
+(ns omnitech.components.autocomplete
   (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]])
   (:require [om.core :as om :include-macros true]
             [cljs.pprint :refer [pprint]]
