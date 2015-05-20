@@ -1,17 +1,34 @@
-(ns omnitech.components.datepicker
+(ns cljs.omnitech.components.autocomplete
   (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]])
   (:require [om.core :as om :include-macros true]
-            [cljs.core.async :refer [chan take! put! close!]]))
+            [cljs.core.async :refer [chan take! put! close! timeout <!]]))
 
-(defn datepicker [cursor owner {:keys [result-ch calendar-build-fn
-                                       results-view results-view-opts
-                                       input-view input-view-opts
-                                       container-view container-view-opts]}]
+(defn- reset-autocomplete-state! [owner]
+  (do
+    (om/set-state! owner :highlighted-index 0)
+    (om/set-state! owner :value "")))
+
+(defn- handle-highlight [owner idx]
+  (let [idx (min idx (count (om/get-state owner :suggestions)))
+        idx (max idx -1)]
+    (om/set-state! owner :highlighted-index idx)))
+
+(defn- handle-select [owner result-ch idx]
+  (let [suggestions (om/get-state owner :suggestions)
+        item (get (vec suggestions) idx)]
+    (do
+      (put! result-ch [idx item])
+      (reset-autocomplete-state! owner))))
+
+(defn autocomplete [cursor owner {:keys [result-ch suggestions-fn
+                                         results-view results-view-opts
+                                         input-view input-view-opts
+                                         container-view container-view-opts]}]
   (reify
 
     om/IDisplayName
     (display-name [_]
-      "Core Datepicker Component")
+      "Core Autocomplete Component")
 
     om/IInitState
     (init-state [_]
@@ -26,7 +43,11 @@
         (go-loop []
           (alt!
             select-ch    ([v _] (handle-select owner result-ch v))
-            focus-ch     ([v _] (om/set-state! owner :focused? v))
+            focus-ch     ([v _] (if v
+                                  (om/set-state! owner :focused? v)
+                                  (go
+                                    (let [_ (<! (timeout 300))]
+                                      (om/set-state! owner :focused? v)))))
             value-ch     ([v _] (om/set-state! owner :value v))
             highlight-ch ([v _] (handle-highlight owner v)))
           (recur))))

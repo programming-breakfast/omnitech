@@ -8,23 +8,38 @@
                  [org.clojure/clojurescript "0.0-3269"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.omcljs/om "0.8.8"]
-                 [com.andrewmcveigh/cljs-time "0.3.5"]]
+                 [com.andrewmcveigh/cljs-time "0.3.5"]
+                 [garden "1.2.5"]]
 
   :plugins [[lein-cljsbuild "1.0.6-SNAPSHOT"]
             [lein-figwheel "0.3.1"]
             [refactor-nrepl "1.1.0-SNAPSHOT"]
-            [cider/cider-nrepl "0.9.0-SNAPSHOT"]]
+            [cider/cider-nrepl "0.9.0-SNAPSHOT"]
+            [lein-garden "0.2.6"]
+            [lein-pdo "0.1.1"]]
 
   :source-paths ["src"]
 
-  :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
+  :clean-targets ^{:protect false} ["resources/public/js/compiled" "resources/public/css/compiled" "target"]
+
+  :garden {:builds [{:id "dev"
+                     :source-paths ["src/clj/omnitech_styles"]
+                     :stylesheet clj.omnitech-styles.core/omnitech
+                     :compiler {:output-to "resources/public/css/compiled/omnitech.css"
+                                :pretty-print? true}}
+                    {:id "min"
+                     :source-paths ["src/clj/omnitech_styles"]
+                     :stylesheet clj.omnitech-styles.core/omnitech
+                     :compiler {:output-to "resources/public/css/compiled/omnitech.css"
+                                :pretty-print? false}}]}
 
   :cljsbuild {:builds [{:id "dev"
-                        :source-paths ["src"]
+                        :source-paths ["src/cljs"]
 
-                        :figwheel { :on-jsload "omnitech.core/on-js-reload" }
+                        :figwheel {:on-jsload "cljs.omnitech.core/on-js-reload"
+                                   :websocket-host "localhost"}
 
-                        :compiler {:main omnitech.core
+                        :compiler {:main cljs.omnitech.core
                                    :asset-path "js/compiled/out"
                                    :output-to "resources/public/js/compiled/omnitech.js"
                                    :output-dir "resources/public/js/compiled/out"
@@ -35,36 +50,12 @@
                        {:id "min"
                         :source-paths ["src"]
                         :compiler {:output-to "resources/public/js/compiled/omnitech.js"
-                                   :main omnitech.core
+                                   :main cljs.omnitech.core
                                    :optimizations :advanced
                                    :pretty-print false}}]}
 
-  :figwheel {
-             ;; :http-server-root "public" ;; default and assumes "resources"
-             ;; :server-port 3449 ;; default
-             :css-dirs ["resources/public/css"] ;; watch and update CSS
+  :figwheel {:css-dirs ["resources/public/css"]
+             :nrepl-port 7888}
 
-             ;; Start an nREPL server into the running figwheel process
-             :nrepl-port 7888
-
-             ;; Server Ring Handler (optional)
-             ;; if you want to embed a ring handler into the figwheel http-kit
-             ;; server, this is for simple ring servers, if this
-             ;; doesn't work for you just run your own server :)
-             ;; :ring-handler hello_world.server/handler
-
-             ;; To be able to open files in your editor from the heads up display
-             ;; you will need to put a script on your path.
-             ;; that script will have to take a file path and a line number
-             ;; ie. in  ~/bin/myfile-opener
-             ;; #! /bin/sh
-             ;; emacsclient -n +$2 $1
-             ;;
-             ;; :open-file-command "myfile-opener"
-
-             ;; if you want to disable the REPL
-             ;; :repl false
-
-             ;; to configure a different figwheel logfile path
-             ;; :server-logfile "tmp/logs/figwheel-logfile.log"
-             })
+  :aliases {"start-dev" ["do" "clean" ["pdo" ["garden" "auto" "dev"] "figwheel"]]
+            "build-min" ["do" "clean" ["cljsbuild" "once" "min"] ["garden" "once" "min"]]})

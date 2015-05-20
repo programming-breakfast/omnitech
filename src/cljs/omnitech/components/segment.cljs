@@ -1,8 +1,7 @@
-(ns omnitech.components.segment
+(ns cljs.omnitech.components.segment
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [cljs.pprint :refer [pprint]]
-            [omnitech.components.autocomplete.jetradar :refer [jetradar-ac]]))
+            [cljs.omnitech.components.autocomplete.jetradar :refer [jetradar-ac]]))
 
 (defn- transform-fn [{:keys [code title city_name country_name type]}]
   {:iata code

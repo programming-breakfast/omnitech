@@ -1,8 +1,8 @@
-(ns ^:figwheel-always omnitech.core
+(ns ^:figwheel-always cljs.omnitech.core
     (:require [om.core :as om :include-macros true]
               [om.dom :as dom :include-macros true]
               [cljs.pprint :refer [pprint]]
-              [omnitech.components.segment :refer [segment]]
+              [cljs.omnitech.components.segment :refer [segment]]
               [cljs-time.core :as time]))
 
 (enable-console-print!)

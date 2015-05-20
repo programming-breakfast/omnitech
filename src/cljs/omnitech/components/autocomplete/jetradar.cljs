@@ -1,11 +1,10 @@
-(ns omnitech.components.autocomplete.jetradar
+(ns cljs.omnitech.components.autocomplete.jetradar
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [goog.events :as gevents]
             [cljs.core.async :refer [put! <! chan]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [omnitech.components.autocomplete :as ac]
-            [cljs.pprint :refer [pprint]])
+            [cljs.omnitech.components.autocomplete :as ac])
   (:import [goog.net XhrIo]
            goog.net.EventType
            [goog.events EventType]))
