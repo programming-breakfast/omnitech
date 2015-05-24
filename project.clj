@@ -48,7 +48,7 @@
                                    :source-map-timestamp true
                                    :cache-analysis true }}
                        {:id "min"
-                        :source-paths ["src"]
+                        :source-paths ["src/cljs"]
                         :compiler {:output-to "resources/public/js/compiled/omnitech.js"
                                    :main cljs.omnitech.core
                                    :optimizations :advanced

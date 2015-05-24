@@ -78,7 +78,7 @@
 
     om/IDisplayName
     (display-name [_]
-      "Jetraar Autocomplete Results")
+      "Jetradar Autocomplete Results")
 
     om/IRenderState
     (render-state [_ {:keys [highlight-ch select-ch value loading? focused? suggestions highlighted-index]}]
